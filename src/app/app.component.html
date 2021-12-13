@@ -1,6 +1,6 @@
 <div class="fixed-top d-flex justify-content-between p-3 text-white">
-  <div style="width: 200px;">coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
-  <div style="width: 100px;">speed: {{ship.body.speed | number:'1.0-0'}}</div>
-  <div style="width: 100px;">health: {{ship.health}}</div>
+  <div class="col text-start">coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
+  <div class="col text-center">speed: {{ship.body.speed | number:'1.0-0'}}</div>
+  <div class="col text-end">health: {{ship.health}}</div>
 </div>
 <canvas #canvas></canvas>
