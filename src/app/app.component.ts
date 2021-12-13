@@ -1,5 +1,4 @@
-import { compileDeclareDirectiveFromMetadata, ThisReceiver } from '@angular/compiler';
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
 
 @Component({
@@ -7,19 +6,26 @@ import * as Phaser from 'phaser';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
-  game: Phaser.Game;
+  @ViewChild('canvas', { static: true })
+  canvas!: ElementRef;
+  game!: Phaser.Game;
 
-  constructor() {
+  ngOnInit() {
     this.game = new Phaser.Game({
-      type: Phaser.AUTO,
+      type: Phaser.WEBGL,
       scale: { mode: Phaser.Scale.RESIZE },
       scene: DeepSpace,
       physics: { default: 'arcade' },
       autoFocus: true,
+      canvas: this.canvas.nativeElement,
       // pixelArt: true,
     });
+  }
+
+  get ship() {
+    return (this.game.scene.getScene('DeepSpace') as DeepSpace)?.ship || { x: 0, y: 0};
   }
 }
 
@@ -32,7 +38,6 @@ class DeepSpace extends Phaser.Scene {
 
   spaceSectors: SpaceSector[] = [];
 
-  crashed = false;
   landed = false;
 
   constructor() {
@@ -70,10 +75,11 @@ class DeepSpace extends Phaser.Scene {
   }
 
   reset() {
-    this.crashed = false;
     this.landed = false;
     this.ship.setPosition(0, 0);
     this.ship.setVelocity(0);
+    this.ship.health = 100;
+    this.ship.crashed = false;
   }
 
   pilotShip() {
@@ -83,7 +89,7 @@ class DeepSpace extends Phaser.Scene {
       this.reset();
     }
 
-    if (this.crashed) {
+    if (this.ship.health <= 0) {
       this.ship.setVelocity(0);
       this.ship.setAngularVelocity(0);
       return;
@@ -130,7 +136,7 @@ class DeepSpace extends Phaser.Scene {
           stars.add(star);
         }
         const collider = this.physics.add.collider(ship, stars, function() {
-          // do nothing
+          ship.health--;
         });
         this.spaceSectors.push({ x, y, stars, collider });
       }
@@ -166,6 +172,9 @@ class Ship extends Phaser.Physics.Arcade.Sprite {
   override body!: Phaser.Physics.Arcade.Body;
   override scene!: DeepSpace;
 
+  health = 100;
+  crashed = false;
+
   constructor(scene: DeepSpace, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
     scene.add.existing(this);
@@ -200,8 +209,12 @@ class Ship extends Phaser.Physics.Arcade.Sprite {
   }
 
   render() {
-    const { crashed } = this.scene;
-    if (crashed) {
+    const { crashed, health } = this;
+    if (health <= 0) {
+      if (!crashed) {
+        this.scene.sound.play('explosion-sound');
+        this.crashed = true;
+      }
       this.setTexture('explosion');
     } else {
       this.setTexture('ship');
@@ -224,23 +237,19 @@ class Outpost extends Phaser.GameObjects.Sprite {
     outpostWall.setVisible(false);
     outpostWall.setDepth(101);
     scene.physics.add.existing(outpostWall, true);
-    scene.physics.add.collider(scene.ship, outpostWall, () => {
-      if (!scene.crashed) {
-        scene.sound.play('explosion-sound');
-      }
-      scene.crashed = true;
-    });
+    scene.physics.add.collider(scene.ship, outpostWall, () => scene.ship.health = 0);
     const outpostLandingPad = scene.add.rectangle(this.x + 58, this.y - 30, 100, 50);
     outpostLandingPad.setStrokeStyle(1, 0xff0000);
     outpostLandingPad.setVisible(false);
     outpostLandingPad.setDepth(101);
     scene.physics.add.existing(outpostLandingPad, true);
     scene.physics.add.overlap(scene.ship, outpostLandingPad, () => {
-      if (scene.ship.body.speed === 0 && !scene.crashed) {
+      if (scene.ship.body.speed === 0 && !scene.ship.crashed) {
         if (!scene.landed) {
           scene.sound.play('land-sound');
         }
         scene.landed = true;
+        scene.ship.health = 100;
       } else {
         scene.landed = false;
       }
