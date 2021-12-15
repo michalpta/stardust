@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
+import * as faker from 'faker';
 
 @Component({
   selector: 'app-root',
@@ -38,8 +39,6 @@ class DeepSpace extends Phaser.Scene {
 
   spaceSectors: SpaceSector[] = [];
 
-  landed = false;
-
   constructor() {
     super('DeepSpace');
   }
@@ -57,12 +56,8 @@ class DeepSpace extends Phaser.Scene {
   create() {
     const ship = new Ship(this, 0, 0, 'ship');
     this.ship = ship;
-    this.outpost = new Outpost(this, 800, 200, 'outpost');
-
     this.cameras.main.startFollow(ship);
-
     this.cursors = this.input.keyboard.createCursorKeys();
-
     // const music = this.sound.add('music');
     // music.play({ loop: true });
   }
@@ -70,12 +65,11 @@ class DeepSpace extends Phaser.Scene {
   override update() {
     this.pilotShip();
     this.ship.render();
-    this.outpost.render();
-    this.renderStars();
+    this.spaceSectors.forEach(sector => sector.render());
+    this.updateSpaceSectors();
   }
 
   reset() {
-    this.landed = false;
     this.ship.setPosition(0, 0);
     this.ship.setVelocity(0);
     this.ship.health = 100;
@@ -118,36 +112,27 @@ class DeepSpace extends Phaser.Scene {
     }
   }
 
-  renderStars() {
+  updateSpaceSectors() {
     const { ship, spaceSectors } = this;
     const { SECTOR_SIZE } = SpaceSector;
     const sectorX = Math.floor(ship.x / SECTOR_SIZE);
     const sectorY = Math.floor(ship.y / SECTOR_SIZE);
-    const sectorsToRender: { x: number, y: number }[] = [];
+    const sectorsToGenerate: { x: number, y: number }[] = [];
     [sectorX - 1, sectorX, sectorX + 1].forEach(x =>
-      [sectorY - 1, sectorY, sectorY + 1].forEach(y => sectorsToRender.push({ x, y }))
+      [sectorY - 1, sectorY, sectorY + 1].forEach(y => sectorsToGenerate.push({ x, y }))
     );
-    sectorsToRender.forEach(({ x, y }) => {
+    sectorsToGenerate.forEach(({ x, y }) => {
       if (!spaceSectors.find(s => s.x === x && s.y === y)) {
-        const generator = new SpaceProceduralGenerator(x + y);
-        const stars = this.physics.add.group();
-        for (let index = 0; index < 100; index++) {
-          const star = this.add.star((x + generator.random()) * SECTOR_SIZE, (y + generator.random()) * SECTOR_SIZE, 4, 0, 5 * generator.random(), 0xffffff);
-          stars.add(star);
-        }
-        const collider = this.physics.add.collider(ship, stars, function() {
-          ship.health--;
-        });
-        this.spaceSectors.push({ x, y, stars, collider });
+        this.spaceSectors.push(new SpaceSector(this, x, y));
       }
     })
-    spaceSectors.forEach(({ x, y, stars, collider }) => {
-      if (!sectorsToRender.find(s => s.x === x && s.y === y)) {
-        stars.destroy(true, true);
-        collider.destroy();
+    spaceSectors.forEach((sector) => {
+      const { x, y } = sector;
+      if (!sectorsToGenerate.find(s => s.x === x && s.y === y)) {
+        sector.destroy();
       }
     });
-    this.spaceSectors = spaceSectors.filter(({ x, y }) => sectorsToRender.find(s => s.x === x && s.y === y));
+    this.spaceSectors = spaceSectors.filter(({ x, y }) => sectorsToGenerate.find(s => s.x === x && s.y === y));
   }
 }
 
@@ -156,7 +141,38 @@ class SpaceSector {
   x!: number;
   y!: number
   stars!: Phaser.Physics.Arcade.Group;
-  collider!: Phaser.Physics.Arcade.Collider;
+  starsCollider!: Phaser.Physics.Arcade.Collider;
+  outpost: Outpost | null;
+
+  constructor(scene: DeepSpace, x: number, y: number) {
+    const { SECTOR_SIZE } = SpaceSector;
+    this.x = x;
+    this.y = y;
+    const { ship } = scene;
+    const generator = new SpaceProceduralGenerator(cantorPairing(x, y));
+    const stars = scene.physics.add.group();
+    for (let index = 0; index < 100; index++) {
+      const star = scene.add.star((x + generator.random()) * SECTOR_SIZE, (y + generator.random()) * SECTOR_SIZE, 4, 0, 5 * generator.random(), 0xffffff);
+      stars.add(star);
+    }
+    this.stars = stars;
+    this.starsCollider = scene.physics.add.collider(ship, stars, function() {
+      if (ship.health > 0) {
+        ship.health--;
+      }
+    });
+    const hasOutpost = generator.random() >= 0.5;
+    this.outpost = hasOutpost ? new Outpost(scene, (x + generator.random()) * SECTOR_SIZE, (y + generator.random()) * SECTOR_SIZE, 'outpost') : null;
+  }
+
+  render() {
+    this.outpost?.render();
+  }
+
+  destroy() {
+    this.stars.destroy(true, true);
+    this.starsCollider.destroy();
+  }
 }
 
 class SpaceProceduralGenerator {
@@ -210,7 +226,7 @@ class Ship extends Phaser.Physics.Arcade.Sprite {
 
   render() {
     const { crashed, health } = this;
-    if (health <= 0) {
+    if (health === 0) {
       if (!crashed) {
         this.scene.sound.play('explosion-sound');
         this.crashed = true;
@@ -226,6 +242,8 @@ class Ship extends Phaser.Physics.Arcade.Sprite {
 class Outpost extends Phaser.GameObjects.Sprite {
 
   override scene!: DeepSpace;
+
+  landed = false;
 
   constructor(scene: DeepSpace, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -244,20 +262,24 @@ class Outpost extends Phaser.GameObjects.Sprite {
     outpostLandingPad.setDepth(101);
     scene.physics.add.existing(outpostLandingPad, true);
     scene.physics.add.overlap(scene.ship, outpostLandingPad, () => {
-      if (scene.ship.body.speed === 0 && !scene.ship.crashed) {
-        if (!scene.landed) {
+      if (scene.ship.body.speed === 0 && scene.ship.health > 0) {
+        if (!this.landed) {
           scene.sound.play('land-sound');
         }
-        scene.landed = true;
+        this.landed = true;
         scene.ship.health = 100;
       } else {
-        scene.landed = false;
+        this.landed = false;
       }
     });
+    faker.seed(cantorPairing(x, y));
+    this.name = faker.name.lastName() + ' Port';
+    const label = scene.add.text(x + 10, y - 4, this.name, { color: '#ffbf00', fontFamily: 'sans-serif', fontSize: '10px', fontStyle: 'bold' });
+    label.setDepth(101);
   }
 
   render() {
-    const { landed } = this.scene;
+    const { landed } = this;
     if (landed) {
       this.setTexture('outpost-landed');
     } else {
@@ -265,4 +287,8 @@ class Outpost extends Phaser.GameObjects.Sprite {
     }
   }
 
+}
+
+function cantorPairing(x: number, y: number): number {
+  return 0.5 * (x + y) * (x + y + 1) + y;
 }
