@@ -24,7 +24,7 @@ export class Ship extends Phaser.Physics.Arcade.Sprite {
       },
       lifespan: {
         onEmit: () => {
-          return 500;
+          return Phaser.Math.Between(200, 500);
         }
       },
       alpha: {

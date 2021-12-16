@@ -19,7 +19,7 @@ export class DeepSpace extends Phaser.Scene {
     this.load.image('outpost-landed', 'assets/outpost-landed.png');
     this.load.audio('explosion-sound', 'assets/explosion.wav');
     this.load.audio('land-sound', 'assets/land.wav');
-    this.load.audio('music', 'assets/background-music.mp3');
+    this.load.audio('music', 'assets/intro-music.mp3');
   }
 
   create() {

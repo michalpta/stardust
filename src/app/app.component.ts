@@ -13,6 +13,8 @@ export class AppComponent implements OnInit {
   canvas!: ElementRef;
   game!: Phaser.Game;
 
+  dialogVisible = true;
+
   ngOnInit() {
     this.game = new Phaser.Game({
       type: Phaser.WEBGL,
