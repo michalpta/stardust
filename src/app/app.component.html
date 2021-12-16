@@ -1,4 +1,7 @@
-<div class="fixed-top d-flex justify-content-between p-3 text-white">
+<div *ngIf="!ship" class="fixed-top d-flex justify-content-center p-3 text-white">
+  Loading... it may take few seconds :)
+</div>
+<div *ngIf="ship" class="fixed-top d-flex justify-content-between p-3 text-white">
   <div class="col text-start">coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
   <div class="col text-center">speed: {{ship.body.speed | number:'1.0-0'}}</div>
   <div class="col text-end">health: {{ship.health}}</div>
