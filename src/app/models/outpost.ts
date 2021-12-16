@@ -34,11 +34,15 @@ export class Outpost extends Phaser.GameObjects.Sprite {
       if (scene.ship.body.speed === 0 && scene.ship.health > 0) {
         if (!this.landed) {
           scene.sound.play('land-sound');
+          this.setTexture('outpost-landed');
         }
         this.landed = true;
         scene.ship.health = 100;
       } else {
-        this.landed = false;
+        if (this.landed) {
+          this.landed = false;
+          this.setTexture('outpost');
+        }
       }
     }));
     faker.seed(cantorPairing(x, y));
@@ -49,12 +53,7 @@ export class Outpost extends Phaser.GameObjects.Sprite {
   }
 
   render() {
-    const { landed } = this;
-    if (landed) {
-      this.setTexture('outpost-landed');
-    } else {
-      this.setTexture('outpost');
-    }
+    // do nothing
   }
 
   override destroy(fromScene?: boolean): void {

@@ -45,12 +45,15 @@ export class Ship extends Phaser.Physics.Arcade.Sprite {
     const { crashed, health } = this;
     if (health === 0) {
       if (!crashed) {
-        this.scene.sound.play('explosion-sound');
         this.crashed = true;
+        this.scene.sound.play('explosion-sound');
+        this.setTexture('explosion');
       }
-      this.setTexture('explosion');
     } else {
-      this.setTexture('ship');
+      if (crashed) {
+        this.crashed = false;
+        this.setTexture('ship');
+      }
     }
   }
 }

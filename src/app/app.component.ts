@@ -23,6 +23,7 @@ export class AppComponent implements OnInit {
       physics: { default: 'arcade' },
       autoFocus: true,
       canvas: this.canvas.nativeElement,
+      pixelArt: false,
     });
   }
 

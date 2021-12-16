@@ -41,8 +41,8 @@ export class DeepSpace extends Phaser.Scene {
   reset() {
     this.ship.setPosition(0, 0);
     this.ship.setVelocity(0);
+    this.ship.setAngle(0);
     this.ship.health = 100;
-    this.ship.crashed = false;
   }
 
   pilotShip() {
@@ -91,16 +91,16 @@ export class DeepSpace extends Phaser.Scene {
       [sectorY - 1, sectorY, sectorY + 1].forEach(y => sectorsToGenerate.push({ x, y }))
     );
     sectorsToGenerate.forEach(({ x, y }) => {
-      if (!spaceSectors.find(s => s.x === x && s.y === y)) {
+      if (!spaceSectors.some(s => s.x === x && s.y === y)) {
         this.spaceSectors.push(new SpaceSector(this, x, y));
       }
     })
     spaceSectors.forEach((sector) => {
       const { x, y } = sector;
-      if (!sectorsToGenerate.find(s => s.x === x && s.y === y)) {
+      if (!sectorsToGenerate.some(s => s.x === x && s.y === y)) {
         sector.destroy();
       }
     });
-    this.spaceSectors = spaceSectors.filter(({ x, y }) => sectorsToGenerate.find(s => s.x === x && s.y === y));
+    this.spaceSectors = spaceSectors.filter(({ x, y }) => sectorsToGenerate.some(s => s.x === x && s.y === y));
   }
 }
