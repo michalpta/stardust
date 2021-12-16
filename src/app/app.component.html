@@ -2,9 +2,15 @@
   Loading...
 </div>
 <div *ngIf="ship" class="fixed-top d-flex justify-content-between p-3 text-white">
-  <div class="col text-start">coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
-  <div class="col text-center">speed: {{ship.body.speed | number:'1.0-0'}}</div>
-  <div class="col d-flex"><span class="ms-auto me-2">health:</span><span style="width: 150px;"><p-progressBar [value]="ship.health"></p-progressBar></span></div>
+  <div>coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
+  <div class="ms-auto d-flex">
+    <div class="me-3 d-flex">
+      <span class="me-2">speed:</span><span style="width: 20px;">{{ship.body.speed | number:'1.0-0'}}</span>
+    </div>
+    <div class="d-flex">
+      <span class="me-2">health:</span><span style="width: 150px;"><p-progressBar [value]="ship.health"></p-progressBar></span>
+    </div>
+  </div>
 </div>
 
 <div style="height: 100vh; width: 100vw;">
