@@ -1,3 +1,4 @@
+import { Outpost } from "../models/outpost";
 import { Ship } from "../models/ship";
 import { SpaceSector } from "../models/space-sector";
 
@@ -8,6 +9,10 @@ export class DeepSpace extends Phaser.Scene {
 
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
+  mission!: { destination: { x: number, y: number, name: string } }
+
+  score = 0;
+
   constructor() {
     super('DeepSpace');
   }
@@ -17,6 +22,7 @@ export class DeepSpace extends Phaser.Scene {
     this.load.image('explosion', 'assets/explosion.png');
     this.load.image('outpost', 'assets/outpost.png');
     this.load.image('outpost-landed', 'assets/outpost-landed.png');
+    this.load.image('outpost-shadow', 'assets/outpost-shadow.png');
     this.load.audio('explosion-sound', 'assets/explosion.wav');
     this.load.audio('land-sound', 'assets/land.wav');
     this.load.audio('music', 'assets/intro-music.mp3');
@@ -29,6 +35,14 @@ export class DeepSpace extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     const music = this.sound.add('music');
     music.play({ loop: true });
+
+    this.events.on('outpost-landed', (outpost: Outpost) => {
+      if (outpost.x == this.mission.destination.x && outpost.y == this.mission.destination.y) {
+        this.score += 100;
+        this.generateMission();
+      }
+    })
+    this.generateMission();
   }
 
   override update() {
@@ -102,5 +116,22 @@ export class DeepSpace extends Phaser.Scene {
       }
     });
     this.spaceSectors = spaceSectors.filter(({ x, y }) => sectorsToGenerate.some(s => s.x === x && s.y === y));
+  }
+
+  generateMission() {
+    const { ship } = this;
+    const { SECTOR_SIZE } = SpaceSector;
+    let destination = null;
+    while (!destination) {
+      const xOffset = Phaser.Math.Between(-15, 15);
+      const yOffset = Phaser.Math.Between(-15, 15);
+      const sectorX = Math.floor(ship.x / SECTOR_SIZE);
+      const sectorY = Math.floor(ship.y / SECTOR_SIZE);
+      const destinationSector = new SpaceSector(this, sectorX + xOffset, sectorY + yOffset);
+      const { outpost } = destinationSector;
+      destination = outpost ? { x: outpost.x, y: outpost.y, name: outpost.name } : null;
+      destinationSector.destroy();
+    }
+    this.mission = { destination }
   }
 }

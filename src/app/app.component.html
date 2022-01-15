@@ -2,7 +2,11 @@
   Loading...
 </div>
 <div *ngIf="ship" class="fixed-top d-flex justify-content-between p-3 text-white">
-  <div>coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</div>
+  <div class="d-flex">
+    <span style="width: 250px;">coordinates: ({{ship.x | number:'1.0-0'}}, {{ship.y | number:'1.0-0'}})</span>
+    <span style="width: 100px;">score: {{score}}</span>
+    <span *ngIf="mission"> mission: {{mission.destination.name}} ({{mission.destination.x | number:'1.0-0'}}, {{mission.destination.y | number:'1.0-0'}})</span>
+  </div>
   <div class="ms-auto d-flex">
     <div class="me-3 d-flex">
       <span class="me-2">speed:</span><span style="width: 20px;">{{ship.body.speed | number:'1.0-0'}}</span>
@@ -17,21 +21,19 @@
   <canvas #canvas></canvas>
 </div>
 
-<p-dialog header="Stardust - The Game" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{ 'max-width': '500px' }">
+<!-- <p-dialog header="Stardust - The Game" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{ 'max-width': '500px' }">
   <p>
-    Welcome Commander!
-    It's time to begin your first mission.
+    You got a new mission Commander!
   </p>
-  <h4 class="my-3">Find a nearby star outpost - Will Port</h4>
+  <h4 class="my-3">Visit the star outpost - {{mission.destination.name}}</h4>
   <p>
-    Use arrow keys to control the ship.
-    You will find the outpost using the following coordinates (720, 2100).
+    You will find the outpost using the following coordinates ({{mission.destination.x | number:'1.0-0'}}, {{mission.destination.y | number:'1.0-0'}}).
     You can inspect your current position in the top left corner of the screen.
   </p>
   <p>
-    Be careful though, your hull is very fragile. Fly safe.
+    Fly safe.
   </p>
   <ng-template pTemplate="footer">
     <p-button icon="pi pi-check" (click)="dialogVisible=false" label="Ok" styleClass="p-button-text"></p-button>
   </ng-template>
-</p-dialog>
+</p-dialog> -->

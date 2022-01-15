@@ -17,6 +17,9 @@ export class Outpost extends Phaser.GameObjects.Sprite {
     scene.physics.add.existing(this);
     this.setDepth(100);
     this.objects = scene.add.group();
+    const outpostShadow = scene.add.sprite(x, y, 'outpost-shadow');
+    outpostShadow.setDepth(1100);
+    this.objects.add(outpostShadow);
     const outpostWall = scene.add.rectangle(this.x + 63, this.y - 87, 100, 50);
     outpostWall.setStrokeStyle(1, 0xff0000);
     outpostWall.setVisible(false);
@@ -35,6 +38,7 @@ export class Outpost extends Phaser.GameObjects.Sprite {
         if (!this.landed) {
           scene.sound.play('land-sound');
           this.setTexture('outpost-landed');
+          scene.events.emit('outpost-landed', this);
         }
         this.landed = true;
         scene.ship.health = 100;
@@ -47,7 +51,7 @@ export class Outpost extends Phaser.GameObjects.Sprite {
     }));
     faker.seed(cantorPairing(x, y));
     this.name = faker.name.lastName() + ' Port';
-    const label = scene.add.text(x + 10, y - 4, this.name, { color: '#ffbf00', fontFamily: 'sans-serif', fontSize: '10px', fontStyle: 'bold' });
+    const label = scene.add.text(x + 10, y - 4, this.name, { color: '#334455', fontFamily: 'sans-serif', fontSize: '10px', fontStyle: 'bold' });
     label.setDepth(101);
     this.objects.add(label);
   }

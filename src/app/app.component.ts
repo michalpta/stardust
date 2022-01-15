@@ -27,7 +27,19 @@ export class AppComponent implements OnInit {
     });
   }
 
+  get scene() {
+    return this.game.scene.getScene('DeepSpace') as DeepSpace;
+  }
+
   get ship() {
-    return (this.game.scene.getScene('DeepSpace') as DeepSpace)?.ship;
+    return this.scene?.ship;
+  }
+
+  get mission() {
+    return this.scene?.mission;
+  }
+
+  get score() {
+    return this.scene?.score;
   }
 }
